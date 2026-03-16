@@ -1,4 +1,4 @@
-import anthropic
+from groq import Groq
 import logging
 from typing import List, Dict
 from app.core.config import settings
@@ -7,7 +7,7 @@ from app.services.embedding_service import retrieve_chunks
 
 logger = logging.getLogger(__name__)
 
-client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+client = Groq(api_key=settings.groq_api_key)
 
 
 def chat_with_novel(
@@ -48,20 +48,19 @@ Analysis context (summary of the novel analysis):
 Retrieved passages relevant to the user's question:
 {context}"""
 
-    # Build message history
-    messages = []
+    # Build message history (system prompt as first message for Groq)
+    messages = [{"role": "system", "content": system_prompt}]
     for msg in history[-6:]:  # Keep last 6 turns for context
         messages.append({"role": msg.role, "content": msg.content})
     messages.append({"role": "user", "content": message})
 
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=settings.chat_model,
         max_tokens=1500,
-        system=system_prompt,
         messages=messages,
     )
 
-    response_text = response.content[0].text
+    response_text = response.choices[0].message.content
 
     # Determine confidence based on chunk availability
     if not chunks:

@@ -3,15 +3,15 @@ from pathlib import Path
 
 
 class Settings(BaseSettings):
-    anthropic_api_key: str
+    groq_api_key: str
     database_url: str = "sqlite+aiosqlite:///./storyscope.db"
     chroma_persist_dir: str = "./chroma_db"
     upload_dir: str = "./uploads"
     max_file_size_mb: int = 50
 
     # LLM settings
-    analysis_model: str = "claude-sonnet-4-6"
-    chat_model: str = "claude-haiku-4-5-20251001"
+    analysis_model: str = "llama-3.3-70b-versatile"
+    chat_model: str = "llama-3.1-8b-instant"
 
     # Chunking settings
     chunk_size: int = 800

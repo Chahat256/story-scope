@@ -1,4 +1,4 @@
-import anthropic
+from groq import Groq
 import json
 import logging
 from typing import List, Dict, Optional, Tuple
@@ -13,7 +13,7 @@ from app.services.embedding_service import retrieve_chunks
 
 logger = logging.getLogger(__name__)
 
-client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+client = Groq(api_key=settings.groq_api_key)
 
 # Predefined trope library for MVP
 TROPE_LIBRARY = [
@@ -91,13 +91,13 @@ Respond with a JSON object matching exactly this structure:
 
 Respond only with valid JSON."""
 
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=settings.analysis_model,
         max_tokens=1000,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.content[0].text)
+    data = json.loads(response.choices[0].message.content)
     return NovelOverview(**data)
 
 
@@ -135,13 +135,13 @@ Respond with a JSON array. Each element must match exactly:
 Identify between 2-6 major characters. Focus on narrative significance, not just frequency of mention.
 Return only valid JSON array."""
 
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=settings.analysis_model,
         max_tokens=4000,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.content[0].text)
+    data = json.loads(response.choices[0].message.content)
     return [CharacterAnalysis(**c) for c in data]
 
 
@@ -180,13 +180,13 @@ Respond with a JSON array. Each element must match:
 
 Identify the most significant 3-8 relationships. Return only valid JSON array."""
 
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=settings.analysis_model,
         max_tokens=3000,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.content[0].text)
+    data = json.loads(response.choices[0].message.content)
     relationships = []
     for r in data:
         # Validate relationship_type
@@ -228,13 +228,13 @@ Respond with a JSON array. Each element must match:
 
 Identify 3-6 themes. Use interpretive language like 'the text suggests', 'appears to explore'. Return only valid JSON array."""
 
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=settings.analysis_model,
         max_tokens=3000,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.content[0].text)
+    data = json.loads(response.choices[0].message.content)
     return [ThemeAnalysis(**t) for t in data]
 
 
@@ -282,13 +282,13 @@ Respond with a JSON array. Each element must match:
 
 Return only valid JSON array."""
 
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=settings.analysis_model,
         max_tokens=3000,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.content[0].text)
+    data = json.loads(response.choices[0].message.content)
     return [TropeAnalysis(**t) for t in data]
 
 
