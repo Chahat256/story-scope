@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #faf8f3;
+    --foreground: #1a1208;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  }
+}
+
+@layer components {
+  .prose-literary {
+    @apply text-ink-800 leading-relaxed;
+  }
+
+  .section-divider {
+    @apply border-ink-200 my-6;
+  }
+}
