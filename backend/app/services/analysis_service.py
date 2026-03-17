@@ -15,6 +15,19 @@ logger = logging.getLogger(__name__)
 
 client = Groq(api_key=settings.groq_api_key)
 
+
+def parse_json_response(content: str) -> any:
+    """Parse JSON from LLM response, stripping markdown code fences if present."""
+    if not content or not content.strip():
+        raise ValueError("Empty response from LLM")
+    text = content.strip()
+    # Strip ```json ... ``` or ``` ... ``` fences
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1]  # remove opening fence line
+        if text.endswith("```"):
+            text = text.rsplit("```", 1)[0]  # remove closing fence
+    return json.loads(text.strip())
+
 # Predefined trope library for MVP
 TROPE_LIBRARY = [
     {"id": "chosen_one", "name": "The Chosen One", "description": "A character destined or selected to fulfill a special purpose"},
@@ -97,7 +110,7 @@ Respond only with valid JSON."""
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.choices[0].message.content)
+    data = parse_json_response(response.choices[0].message.content)
     return NovelOverview(**data)
 
 
@@ -141,7 +154,7 @@ Return only valid JSON array."""
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.choices[0].message.content)
+    data = parse_json_response(response.choices[0].message.content)
     return [CharacterAnalysis(**c) for c in data]
 
 
@@ -186,7 +199,7 @@ Identify the most significant 3-8 relationships. Return only valid JSON array.""
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.choices[0].message.content)
+    data = parse_json_response(response.choices[0].message.content)
     relationships = []
     for r in data:
         # Validate relationship_type
@@ -234,7 +247,7 @@ Identify 3-6 themes. Use interpretive language like 'the text suggests', 'appear
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.choices[0].message.content)
+    data = parse_json_response(response.choices[0].message.content)
     return [ThemeAnalysis(**t) for t in data]
 
 
@@ -288,7 +301,7 @@ Return only valid JSON array."""
         messages=[{"role": "user", "content": prompt}],
     )
 
-    data = json.loads(response.choices[0].message.content)
+    data = parse_json_response(response.choices[0].message.content)
     return [TropeAnalysis(**t) for t in data]
 
 
