@@ -10,7 +10,7 @@ StoryScope is a portfolio-quality GenAI web application that generates deep, evi
 - **Character Analysis**: Identifies 2–6 major characters with traits, goals, conflicts, and key relationships
 - **Relationship Mapping**: Maps significant character relationships (friendship, rivalry, romance, family, mentorship, conflict, etc.) with supporting passages
 - **Theme Detection**: Identifies recurring themes and motifs with textual evidence and prevalence ratings
-- **Trope Detection**: Matches narrative patterns against a curated 25-entry trope library with confidence levels
+- **Trope Detection**: Matches narrative patterns against a curated 208-entry trope library with confidence levels
 - **Evidence-Grounded**: Every interpretation is backed by retrieved passages from the novel
 - **RAG Chat**: Ask follow-up questions about the novel; answers are grounded in retrieved text chunks
 - **Real-time Processing Status**: Progress bar and stage indicators during analysis (1–3 minutes typical)
@@ -30,9 +30,9 @@ StoryScope
 │       └── services/ # Business logic
 │           ├── pdf_service.py        # PyMuPDF text extraction
 │           ├── chunking_service.py   # Sentence-aware overlapping chunking
-│           ├── embedding_service.py  # SentenceTransformers + ChromaDB
-│           ├── analysis_service.py   # Claude-powered literary analysis
-│           └── chat_service.py       # RAG chat with Claude
+│           ├── embedding_service.py  # Hybrid retrieval (BM25 + ChromaDB + cross-encoder)
+│           ├── analysis_service.py   # Groq-powered literary analysis
+│           └── chat_service.py       # RAG chat with Groq
 └── frontend/         # Next.js 14 (App Router) TypeScript
     └── src/
         ├── app/      # Next.js pages (landing, analysis dashboard)
@@ -46,11 +46,39 @@ StoryScope
 
 ### Key Design Decisions
 
-- **In-memory job store**: The MVP uses a Python dict for job state. This is intentional for simplicity; replace with SQLite/Redis for production.
+- **In-memory job store**: The MVP uses a Python dict for job state. Intentional for simplicity; replace with SQLite/Redis for production.
 - **Background tasks**: FastAPI `BackgroundTasks` runs the processing pipeline asynchronously after upload.
-- **RAG pipeline**: Text is chunked at ~300 words with 60-word overlap, embedded with `all-MiniLM-L6-v2`, stored in ChromaDB, and retrieved per-query for both analysis and chat.
-- **Analysis model**: `claude-sonnet-4-6` for deep analysis; `claude-haiku-4-5-20251001` for chat (faster, cheaper).
+- **Hybrid RAG pipeline**: Text is chunked at ~300 words with 60-word overlap, then indexed in both ChromaDB (dense) and BM25 (sparse). At query time both indexes are searched in parallel, merged via Reciprocal Rank Fusion, and reranked with a cross-encoder. See [Retrieval Pipeline](#retrieval-pipeline) below.
+- **LLM provider**: Groq (`llama-3.3-70b-versatile` for analysis, `llama-3.1-8b-instant` for chat).
 - **JSON-structured outputs**: All LLM calls return structured JSON, parsed directly into Pydantic models.
+
+---
+
+## Retrieval Pipeline
+
+Every query (both analysis and chat) goes through a 4-stage hybrid retrieval pipeline:
+
+```
+Query
+  │
+  ├─► Dense search (ChromaDB cosine, top-20)  ─┐
+  │                                             ├─► Reciprocal Rank Fusion (k=60) → top-20
+  └─► Sparse search (BM25Okapi, top-20)       ─┘
+                                                         │
+                                                         ▼
+                                          Cross-encoder reranker
+                                    (cross-encoder/ms-marco-MiniLM-L-6-v2)
+                                                         │
+                                                         ▼
+                                                    Final top-5
+```
+
+- **Dense** (`all-MiniLM-L6-v2` → ChromaDB): captures semantic similarity
+- **BM25** (`rank-bm25`): captures exact keyword matches; stored in-memory alongside the job
+- **RRF**: fuses the two ranked lists without requiring score normalization
+- **Cross-encoder**: re-scores all 20 candidates as `(query, passage)` pairs for precise relevance ranking
+
+Both indexes are built at indexing time from the same chunks. The BM25 index lives in an in-memory dict (`_bm25_indexes`) keyed by `job_id`; the dense index lives in the persisted ChromaDB collection.
 
 ---
 
@@ -60,7 +88,7 @@ StoryScope
 
 - Python 3.11+
 - Node.js 18+
-- An Anthropic API key
+- A Groq API key (free tier available at [console.groq.com](https://console.groq.com))
 
 ### Backend Setup
 
@@ -76,13 +104,17 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+# Edit .env and add your GROQ_API_KEY
 
 # Start the server
 uvicorn main:app --reload --port 8000
 ```
 
 The API will be available at `http://localhost:8000`. API docs at `http://localhost:8000/docs`.
+
+> **First run note**: On the first query after startup, two models will be downloaded from HuggingFace:
+> - `all-MiniLM-L6-v2` (~90 MB) — embedding model
+> - `cross-encoder/ms-marco-MiniLM-L-6-v2` (~80 MB) — reranker
 
 ### Frontend Setup
 
@@ -110,7 +142,9 @@ The frontend will be available at `http://localhost:3000`.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key | Required |
+| `GROQ_API_KEY` | Your Groq API key | Required |
+| `ANALYSIS_MODEL` | Groq model for analysis | `llama-3.3-70b-versatile` |
+| `CHAT_MODEL` | Groq model for chat | `llama-3.1-8b-instant` |
 | `DATABASE_URL` | SQLite connection string | `sqlite+aiosqlite:///./storyscope.db` |
 | `CHROMA_PERSIST_DIR` | ChromaDB storage directory | `./chroma_db` |
 | `UPLOAD_DIR` | PDF upload storage directory | `./uploads` |
@@ -127,7 +161,7 @@ The frontend will be available at `http://localhost:3000`.
 ## How to Run Locally
 
 1. Clone the repository
-2. Set up backend (see above), ensuring `ANTHROPIC_API_KEY` is set
+2. Set up backend (see above), ensuring `GROQ_API_KEY` is set
 3. Set up frontend (see above)
 4. Open `http://localhost:3000`
 5. Upload a digital text novel PDF (not a scanned image)
@@ -147,8 +181,10 @@ The frontend will be available at `http://localhost:3000`.
 - **Scanned PDFs** (images of pages) are not supported — PyMuPDF cannot extract text from image-based PDFs
 - **Very long novels** (500+ pages) may take 3+ minutes and consume significant API tokens
 - **Non-English novels** may produce lower quality analysis
-- **Job state is in-memory** — restarting the server clears all jobs
+- **BM25 index is in-memory** — restarting the server clears BM25 indexes (ChromaDB persists to disk; re-uploading rebuilds BM25)
+- **Job state is in-memory** — restarting the server clears all job metadata
 - **No authentication** — not suitable for public deployment as-is
+- **Groq free tier** has a 100K tokens/day limit on `llama-3.3-70b-versatile`; switch to `llama-3.1-8b-instant` via `ANALYSIS_MODEL` env var if you hit it
 
 ### API Cost Estimates
 A typical 300-page novel analysis uses approximately:
@@ -156,8 +192,8 @@ A typical 300-page novel analysis uses approximately:
 - Character analysis: ~5,000 tokens
 - Relationship analysis: ~4,000 tokens
 - Theme analysis: ~4,000 tokens
-- Trope analysis: ~4,000 tokens
-- Total: ~20,000 tokens per full analysis
+- Trope analysis: ~6,000 tokens (larger trope library)
+- Total: ~21,000 tokens per full analysis
 
 ---
 
@@ -179,6 +215,6 @@ A typical 300-page novel analysis uses approximately:
 
 ## Tech Stack
 
-**Backend**: Python, FastAPI, PyMuPDF, SentenceTransformers, ChromaDB, Anthropic Claude
+**Backend**: Python, FastAPI, PyMuPDF, SentenceTransformers, ChromaDB, BM25 (`rank-bm25`), Groq
 
 **Frontend**: Next.js 14, TypeScript, TailwindCSS, TanStack Query, Axios, Lucide Icons
