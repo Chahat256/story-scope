@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Any, Dict, Optional, List
 from enum import Enum
 from datetime import datetime
 
@@ -109,6 +109,9 @@ class AnalysisReport(BaseModel):
     themes: List[ThemeAnalysis]
     tropes: List[TropeAnalysis]
     created_at: datetime
+    # Observability fields added in v2
+    chunking_strategy: str = Field(default="fixed", description="'semantic' or 'fixed'")
+    tool_calls_log: List[Dict] = Field(default_factory=list, description="Agentic tool call history")
 
 
 class ChatMessage(BaseModel):

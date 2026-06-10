@@ -8,6 +8,14 @@ interface Props {
   onJobCreated: (jobId: string) => void;
 }
 
+const ACCEPTED_EXTENSIONS = [".pdf", ".epub"];
+const ACCEPTED_MIME = [
+  "application/pdf",
+  "application/epub+zip",
+  "application/epub",
+];
+const MAX_MB = 50;
+
 export default function UploadZone({ onJobCreated }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -18,14 +26,14 @@ export default function UploadZone({ onJobCreated }: Props) {
     async (file: File) => {
       setError(null);
 
-      if (!file.name.toLowerCase().endsWith(".pdf")) {
-        setError("Please upload a PDF file.");
+      const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+      if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+        setError("Please upload a PDF or EPUB file.");
         return;
       }
 
-      const maxMB = 50;
-      if (file.size > maxMB * 1024 * 1024) {
-        setError(`File is too large. Maximum size is ${maxMB}MB.`);
+      if (file.size > MAX_MB * 1024 * 1024) {
+        setError(`File is too large. Maximum size is ${MAX_MB}MB.`);
         return;
       }
 
@@ -75,7 +83,7 @@ export default function UploadZone({ onJobCreated }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept=".pdf"
+          accept=".pdf,.epub,application/pdf,application/epub+zip"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
@@ -95,15 +103,15 @@ export default function UploadZone({ onJobCreated }: Props) {
             </div>
             <div>
               <p className="text-ink-900 font-semibold text-lg mb-1">
-                Drop your novel PDF here
+                Drop your novel here
               </p>
               <p className="text-ink-500 text-sm">
-                or click to browse — up to 50MB
+                or click to browse — up to {MAX_MB}MB
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs text-ink-400 bg-ink-50 px-4 py-2 rounded-full">
               <FileText className="w-3.5 h-3.5" />
-              Best for digital text PDFs — not scanned images
+              PDF or EPUB — digital text files only (not scanned images)
             </div>
           </div>
         )}

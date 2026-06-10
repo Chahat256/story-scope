@@ -82,6 +82,8 @@ export interface AnalysisReport {
   themes: ThemeAnalysis[];
   tropes: TropeAnalysis[];
   created_at: string;
+  chunking_strategy?: "semantic" | "fixed";
+  tool_calls_log?: Array<Record<string, unknown>>;
 }
 
 export interface ChatMessage {

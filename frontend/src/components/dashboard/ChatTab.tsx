@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Loader2, BookOpen } from "lucide-react";
 import type { ChatMessage } from "@/types/analysis";
-import { sendChatMessage } from "@/lib/api";
+import { streamChatMessage } from "@/lib/api";
 import PassageCard from "@/components/ui/PassageCard";
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
 
 interface MessageWithSources extends ChatMessage {
   sources?: Array<{ text: string; page_reference: string | null; relevance: string }>;
+  streaming?: boolean;
 }
 
 export default function ChatTab({ jobId }: Props) {
@@ -27,35 +28,77 @@ export default function ChatTab({ jobId }: Props) {
     if (!input.trim() || isLoading) return;
 
     const userMsg: MessageWithSources = { role: "user", content: input };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    const historyForRequest = messages.map(({ role, content }) => ({ role, content }));
+    const messageText = input;
+
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
 
+    // Add a placeholder assistant message that will be filled token-by-token
+    const placeholderIdx = messages.length + 1;
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: "", streaming: true },
+    ]);
+
     try {
-      const history = newMessages
-        .slice(0, -1)
-        .map(({ role, content }) => ({ role, content }));
-
-      const result = await sendChatMessage(jobId, input, history);
-
-      setMessages([
-        ...newMessages,
-        {
-          role: "assistant",
-          content: result.response,
-          sources: result.sources,
+      await streamChatMessage(jobId, messageText, historyForRequest, {
+        onSources: (sources) => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              ...updated[updated.length - 1],
+              sources,
+            };
+            return updated;
+          });
         },
-      ]);
-    } catch (err) {
-      setMessages([
-        ...newMessages,
-        {
-          role: "assistant",
+        onToken: (token) => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            updated[updated.length - 1] = {
+              ...last,
+              content: last.content + token,
+            };
+            return updated;
+          });
+        },
+        onDone: () => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              ...updated[updated.length - 1],
+              streaming: false,
+            };
+            return updated;
+          });
+          setIsLoading(false);
+        },
+        onError: (error) => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              ...updated[updated.length - 1],
+              content: "Sorry, I encountered an error. Please try again.",
+              streaming: false,
+            };
+            return updated;
+          });
+          setIsLoading(false);
+        },
+      });
+    } catch {
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          ...updated[updated.length - 1],
           content: "Sorry, I encountered an error. Please try again.",
-        },
-      ]);
-    } finally {
+          streaming: false,
+        };
+        return updated;
+      });
       setIsLoading(false);
     }
   };
@@ -90,6 +133,14 @@ export default function ChatTab({ jobId }: Props) {
                   }`}
                 >
                   {msg.content}
+                  {/* Blinking cursor while streaming */}
+                  {msg.streaming && (
+                    <span className="inline-block w-0.5 h-4 bg-ink-500 ml-0.5 animate-pulse align-middle" />
+                  )}
+                  {/* Empty streaming message — show spinner */}
+                  {msg.streaming && !msg.content && (
+                    <Loader2 className="w-4 h-4 text-ink-500 animate-spin inline-block" />
+                  )}
                 </div>
 
                 {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
@@ -104,13 +155,6 @@ export default function ChatTab({ jobId }: Props) {
             </div>
           ))}
 
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-ink-50 rounded-2xl px-4 py-3">
-                <Loader2 className="w-4 h-4 text-ink-500 animate-spin" />
-              </div>
-            </div>
-          )}
           <div ref={bottomRef} />
         </div>
 
@@ -131,7 +175,11 @@ export default function ChatTab({ jobId }: Props) {
               disabled={!input.trim() || isLoading}
               className="bg-ink-900 hover:bg-ink-700 disabled:opacity-50 disabled:cursor-not-allowed text-parchment rounded-xl px-4 py-2.5 transition-colors"
             >
-              <Send className="w-4 h-4" />
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </button>
           </div>
         </div>

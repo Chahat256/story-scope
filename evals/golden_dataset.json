@@ -1,0 +1,224 @@
+{
+  "version": "1.0",
+  "description": "Golden dataset for StoryScope literary analysis evaluation. All novels are available on Project Gutenberg.",
+  "novels": [
+    {
+      "id": "pride_and_prejudice",
+      "title": "Pride and Prejudice",
+      "author": "Jane Austen",
+      "gutenberg_url": "https://www.gutenberg.org/ebooks/1342",
+      "genre": "Romantic Fiction",
+      "expected_characters": [
+        "Elizabeth Bennet",
+        "Mr. Darcy",
+        "Jane Bennet",
+        "Mr. Bingley",
+        "Lydia Bennet",
+        "Mr. Wickham",
+        "Mrs. Bennet",
+        "Mr. Bennet",
+        "Mr. Collins",
+        "Lady Catherine de Bourgh"
+      ],
+      "expected_themes": [
+        "Pride and Prejudice",
+        "Marriage and Social Class",
+        "Love and Self-Discovery",
+        "Family and Society",
+        "Women's Independence"
+      ],
+      "expected_tropes": [
+        "enemies_to_lovers",
+        "social_class_conflict",
+        "arranged_marriage",
+        "forbidden_love",
+        "coming_of_age"
+      ],
+      "notes": "Focus on top 4 characters for character eval; themes are central to the text."
+    },
+    {
+      "id": "frankenstein",
+      "title": "Frankenstein; or, The Modern Prometheus",
+      "author": "Mary Shelley",
+      "gutenberg_url": "https://www.gutenberg.org/ebooks/84",
+      "genre": "Gothic Fiction / Science Fiction",
+      "expected_characters": [
+        "Victor Frankenstein",
+        "The Monster",
+        "Henry Clerval",
+        "Elizabeth Lavenza",
+        "Robert Walton",
+        "Alphonse Frankenstein"
+      ],
+      "expected_themes": [
+        "Creation and Responsibility",
+        "Alienation and Rejection",
+        "Ambition and Hubris",
+        "Nature vs. Science",
+        "Revenge and Destruction"
+      ],
+      "expected_tropes": [
+        "chosen_one",
+        "tragic_villain",
+        "redemption_arc",
+        "man_vs_nature",
+        "obsession",
+        "identity_discovery"
+      ],
+      "notes": "The Monster is a deuteragonist/antagonist. Unreliable narrator via nested frame structure."
+    },
+    {
+      "id": "adventures_huckleberry_finn",
+      "title": "Adventures of Huckleberry Finn",
+      "author": "Mark Twain",
+      "gutenberg_url": "https://www.gutenberg.org/ebooks/76",
+      "genre": "Adventure / Literary Fiction",
+      "expected_characters": [
+        "Huckleberry Finn",
+        "Jim",
+        "Tom Sawyer",
+        "The Duke",
+        "The King",
+        "Pap Finn"
+      ],
+      "expected_themes": [
+        "Freedom and Slavery",
+        "Moral Growth",
+        "Hypocrisy and Society",
+        "Race and Humanity",
+        "Adventure and Escape"
+      ],
+      "expected_tropes": [
+        "coming_of_age",
+        "unlikely_allies",
+        "fish_out_of_water",
+        "social_class_conflict",
+        "quest_narrative"
+      ],
+      "notes": "Jim and Huck are the core relationship; themes of race are central."
+    },
+    {
+      "id": "sherlock_holmes_study_scarlet",
+      "title": "A Study in Scarlet",
+      "author": "Arthur Conan Doyle",
+      "gutenberg_url": "https://www.gutenberg.org/ebooks/244",
+      "genre": "Mystery / Detective Fiction",
+      "expected_characters": [
+        "Sherlock Holmes",
+        "Dr. Watson",
+        "Inspector Lestrade",
+        "Jefferson Hope",
+        "Enoch Drebber"
+      ],
+      "expected_themes": [
+        "Logic and Deduction",
+        "Justice and Revenge",
+        "Partnership and Friendship",
+        "Crime and Society"
+      ],
+      "expected_tropes": [
+        "mentor_student",
+        "revenge_plot",
+        "unlikely_allies",
+        "dark_secret",
+        "quest_narrative"
+      ],
+      "notes": "Holmes and Watson relationship is key. Two-part structure (London + Utah flashback)."
+    },
+    {
+      "id": "dracula",
+      "title": "Dracula",
+      "author": "Bram Stoker",
+      "gutenberg_url": "https://www.gutenberg.org/ebooks/345",
+      "genre": "Gothic Horror",
+      "expected_characters": [
+        "Count Dracula",
+        "Jonathan Harker",
+        "Mina Harker",
+        "Van Helsing",
+        "Lucy Westenra",
+        "Dr. Seward",
+        "Lord Godalming",
+        "Quincey Morris"
+      ],
+      "expected_themes": [
+        "Good vs. Evil",
+        "Sexuality and Victorian Morality",
+        "Science and Superstition",
+        "Death and Immortality",
+        "Foreign Threat"
+      ],
+      "expected_tropes": [
+        "found_family",
+        "unlikely_allies",
+        "obsession",
+        "dark_secret",
+        "forbidden_love",
+        "sacrifice"
+      ],
+      "notes": "Epistolary structure via journals and letters. Van Helsing is the mentor figure."
+    },
+    {
+      "id": "great_expectations",
+      "title": "Great Expectations",
+      "author": "Charles Dickens",
+      "gutenberg_url": "https://www.gutenberg.org/ebooks/1400",
+      "genre": "Literary Fiction / Bildungsroman",
+      "expected_characters": [
+        "Pip",
+        "Abel Magwitch",
+        "Miss Havisham",
+        "Estella",
+        "Herbert Pocket",
+        "Joe Gargery",
+        "Jaggers"
+      ],
+      "expected_themes": [
+        "Social Class and Ambition",
+        "Love and Obsession",
+        "Identity and Self-Worth",
+        "Guilt and Redemption",
+        "Loyalty and Gratitude"
+      ],
+      "expected_tropes": [
+        "coming_of_age",
+        "social_class_conflict",
+        "unrequited_love",
+        "redemption_arc",
+        "dark_secret",
+        "found_family"
+      ],
+      "notes": "First-person retrospective narrator. Pip's journey is the central arc."
+    },
+    {
+      "id": "the_picture_of_dorian_gray",
+      "title": "The Picture of Dorian Gray",
+      "author": "Oscar Wilde",
+      "gutenberg_url": "https://www.gutenberg.org/ebooks/174",
+      "genre": "Gothic Fiction / Philosophical Novel",
+      "expected_characters": [
+        "Dorian Gray",
+        "Lord Henry Wotton",
+        "Basil Hallward",
+        "Sybil Vane",
+        "James Vane"
+      ],
+      "expected_themes": [
+        "Aestheticism and Hedonism",
+        "Corruption of Innocence",
+        "Vanity and Narcissism",
+        "Art and Morality",
+        "Consequence and Guilt"
+      ],
+      "expected_tropes": [
+        "coming_of_age",
+        "obsession",
+        "power_corrupts",
+        "forbidden_love",
+        "mentor_student",
+        "dark_secret"
+      ],
+      "notes": "Lord Henry as a Mephistopheles-like mentor. The portrait is both symbol and plot device."
+    }
+  ]
+}
