@@ -247,3 +247,4 @@ npm run dev          # http://localhost:3000
 | Frontend | Next.js 14 (App Router), TypeScript, TailwindCSS |
 | State | TanStack Query, React useState |
 | Icons | Lucide React |
+
